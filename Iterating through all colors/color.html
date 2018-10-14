@@ -1,0 +1,111 @@
+<!--
+   color.html
+   
+   Copyright 2018 PRAF <PRAF@DESKTOP-G2BEUMU>
+   
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
+   
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+   
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+   MA 02110-1301, USA.
+   
+   
+-->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<title>untitled</title>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<meta name="generator" content="Geany 1.32" />
+	<script>
+		let greenPosition=0;
+		let redPosition=255;
+		let bluePosition=0;
+		
+		let increament=1;
+		currentLoopValue=0;
+		currentChangingColor='Green';
+		
+		function setNewCurrentChangingColor(){
+			if(currentChangingColor=='Green')
+				currentChangingColor='Red'
+			else if(currentChangingColor=='Red')
+				currentChangingColor='Blue'
+			else if(currentChangingColor=='Blue')
+				currentChangingColor='Green'
+		}
+		
+		function getCurrentColorNewValue(){
+			currentLoopValue+=increament;
+			if(currentLoopValue==255){
+				increament=-1;
+				setNewCurrentChangingColor();
+			}else if(currentLoopValue==0){
+				increament=1;
+				setNewCurrentChangingColor();
+			}
+		}
+		
+		function ColorTrigger() {
+			getCurrentColorNewValue()
+			if(currentChangingColor=='Green'){
+				greenPosition=currentLoopValue;
+			}else if(currentChangingColor=='Red'){
+				redPosition=currentLoopValue;
+			}else if(currentChangingColor=='Blue'){
+				bluePosition=currentLoopValue;
+			}
+			changeBackgroundColor(redPosition,greenPosition,bluePosition);
+				
+		}
+		
+		function changeBackgroundColor(r, g, b){
+			var value= "#"+decToHex(r)+decToHex(g)+decToHex(b);
+			document.getElementById("colorDiv1").style.backgroundColor = value;
+		}
+		
+		function decToHex(number){
+			if (number < 0)
+		  {
+			number = 0xFFFFFFFF + number + 1;
+		  }
+
+		  let hexValue= number.toString(16).toUpperCase();
+		  if (hexValue.length==1){
+			  hexValue="0"+hexValue;
+		  }
+		  return hexValue;
+		}
+		
+		function startEverything(){
+			setInterval(ColorTrigger,5);
+		}
+	</script>
+	<style>
+			.square {
+			  height: 100px;
+			  width: 100px;
+			}
+	</style>
+</head>
+
+<body onload="startEverything()">
+	<div id="colorDiv1"; class="square">
+		
+	</div>
+	
+</body>
+
+</html>

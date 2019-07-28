@@ -17,6 +17,7 @@ public class ReadAndExecuteScript {
 	private File scriptFile;
 	private Connection connection;
 	private char lineTerminator=';';
+	private char stringQuote='\'';
 	private int maxBatchSize=10;
 	ReadAndExecuteScript(String filePath){
 		this.scriptFilePath=filePath;
@@ -36,15 +37,17 @@ public class ReadAndExecuteScript {
 
 	}
 	void readScriptFileAndExecute(){
+		Statement stmt=null;
 		try {
 			BufferedReader reader=new BufferedReader(new FileReader(scriptFile));
 			LineNumberReader lnReader=new LineNumberReader(reader);
 			List<String> queriesList=new ArrayList<>();
 			String line;
-			Statement stmt=connection.createStatement();
+			stmt=connection.createStatement();
 			StringBuilder queryString=new StringBuilder("");
 			int batchSize=0;
 			int lineNumber=0;
+			int currentQueryQuotesCount=0;
 			while((line=reader.readLine())!=null) {
 				lineNumber=lnReader.getLineNumber();
 				line=line.trim();
@@ -54,10 +57,11 @@ public class ReadAndExecuteScript {
 				int curIndex=0;
 				if(line.indexOf(lineTerminator)==-1){
 					queryString.append(line.substring(curIndex)).append(" ");
+					currentQueryQuotesCount+=queryString.chars().filter(num -> num == stringQuote).count();
 				}else {
 					boolean isterminate=true;
 					while(isterminate) {
-						int terminatePos=line.indexOf(lineTerminator,curIndex);
+						int terminatePos=findTerminatePosition(line, currentQueryQuotesCount,curIndex);
 						isterminate=terminatePos>=0;//check if applicable for ; on last
 						if(isterminate) {
 							queryString.append(line.substring(curIndex,terminatePos));
@@ -74,12 +78,14 @@ public class ReadAndExecuteScript {
 								queriesList.clear();
 							}
 						}else {
-							if(curIndex<line.length())
+							if(curIndex<line.length()) {
 								queryString.append(line.substring(curIndex)).append(" ");
+								currentQueryQuotesCount+=queryString.chars().filter(num -> num == stringQuote).count();
+							}
 						}
-						
+
 					}
-					
+
 				}
 			}
 			if(batchSize>0) {
@@ -90,6 +96,30 @@ public class ReadAndExecuteScript {
 		}catch(IOException | SQLException e) {
 			e.printStackTrace();
 		}
+		finally {
+			try {
+				stmt.close();
+				connection.close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	private int findTerminatePosition(String currentLine, int quoteCounts, int currentIndex) {
+		int terminatePos=currentLine.indexOf(lineTerminator,currentIndex);
+		if(terminatePos!=-1) {
+			quoteCounts+=currentLine.substring(currentIndex, terminatePos).chars().filter(num -> num == stringQuote).count();
+			if(quoteCounts % 2 ==0) {
+				return terminatePos;
+			}else {
+				if(terminatePos<currentLine.length()-1)
+					return findTerminatePosition(currentLine,quoteCounts,terminatePos+1);
+				else
+					return -1;
+			}
+		}else
+			return terminatePos;
 	}
 	private void executeAllBatch(Statement stmt, List<String> queriesList) {
 		try {
@@ -102,7 +132,7 @@ public class ReadAndExecuteScript {
 			} catch (SQLException e1) {
 				e1.printStackTrace();
 			}
-			
+
 		}
 
 	}
@@ -111,8 +141,8 @@ public class ReadAndExecuteScript {
 			Statement singleStmt=connection.createStatement();
 			for(String query:queriesList) {
 				try {
-				singleStmt.execute(query);
-				connection.commit();
+					singleStmt.execute(query);
+					connection.commit();
 				}catch (SQLException e) {
 					System.out.println("Error in Executing Query: "+query);
 					connection.rollback();
@@ -121,6 +151,6 @@ public class ReadAndExecuteScript {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
 }

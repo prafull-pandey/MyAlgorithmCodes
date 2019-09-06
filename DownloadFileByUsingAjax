@@ -1,50 +1,55 @@
-//SomeCode are for Extjs
 controller.showLoading();
-			var aTag = document.createElement('a');
-			aTag.innerText = "link text";
-			var win = new Ext.Window({
-				
-			});
-			win.show();
-			win.body.appendChild(aTag);
-			
+
 			var _OBJECT_URL;
-            var http = new XMLHttpRequest();
+			var http = new XMLHttpRequest();
 			var url = exportApiUrl;
 			var params = JSON.stringify({ 
-					columnList: listOfColumn,
-                    searchOrderFormValues: extraparams,
-                    reportName: reportNameArg,
-                    validationPerformed: false 
-					});
+				columnList: listOfColumn,
+				searchOrderFormValues: extraparams,
+				reportName: reportNameArg,
+				validationPerformed: false 
+			});
 			http.open("POST", url, true);
 
 			http.setRequestHeader("Content-type", "application/json; charset=utf-8");
 			http.responseType = 'blob';
 			http.onreadystatechange = function() {
 				if(http.readyState == 4 && http.status == 200) {
-					
+
 					if(http.response.type=='application/json'){
 						var reader = new FileReader();
 						reader.onload = function(){
-						  var arrayBuffer = reader.result;
-						  controller.hideListSuccessMessage();
-		                    var data = Ext.JSON.decode(arrayBuffer);
-		                    controller.showListErrorMessage(data.message);
-		                    controller.hideLoading();
+							var arrayBuffer = reader.result;
+							controller.hideListSuccessMessage();
+							var data = Ext.JSON.decode(arrayBuffer);
+							controller.showListErrorMessage(data.message);
+							controller.hideLoading();
 						};
 						reader.readAsText (http.response);
-						win.close();
+
 					}else{
 						_OBJECT_URL = URL.createObjectURL(http.response);
-						aTag.setAttribute('href', _OBJECT_URL);
-						aTag.click();
-						win.close();
+						//GetFileNameFromHere
+						String content=http.getResponseHeader('content-disposition');
+						var comp = Ext.get('downloadIframe');
+						try {
+							Ext.destroy(comp);
+						} catch (e) {
+						}
+						var body = Ext.getBody();
+						var iframe = body.createChild({
+							tag : 'iframe',
+							cls : 'x-hidden',
+							id : 'downloadIframe',
+							name : 'iframe',
+							src:_OBJECT_URL
+						});
+
 					}
 				}
 			}
 			http.send(params);
 
-            setTimeout(function() {
-                controller.hideLoading();
-            }, 5000);
+			setTimeout(function() {
+				controller.hideLoading();
+			}, 5000);
